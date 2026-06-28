@@ -18,7 +18,10 @@ function shuffleArray<T>(array: T[]): T[] {
 async function fetchRssKeywords(searchQuery: string, fallbackPool: string[]): Promise<string[]> {
   try {
     const url = `https://news.google.com/rss/search?q=${encodeURIComponent(searchQuery)}&hl=ko&gl=KR&ceid=KR:ko`;
-    const response = await fetch(url, { cache: "no-store" });
+    const response = await fetch(url, { 
+      cache: "no-store",
+      signal: AbortSignal.timeout(5000)
+    });
     if (!response.ok) throw new Error("Failed to fetch RSS");
     const xml = await response.text();
     

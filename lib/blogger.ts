@@ -107,7 +107,8 @@ export async function createPost(input: CreateBloggerPostInput): Promise<Blogger
       title,
       content,
       labels
-    })
+    }),
+    signal: AbortSignal.timeout(15000)
   });
 
   if (!response.ok) {

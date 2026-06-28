@@ -24,7 +24,8 @@ export async function GET() {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         Accept: "application/json"
-      }
+      },
+      signal: AbortSignal.timeout(10000)
     });
 
     if (!response.ok) {

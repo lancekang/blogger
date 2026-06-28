@@ -27,7 +27,8 @@ async function refreshAccessToken(token: {
         client_secret: process.env.GOOGLE_CLIENT_SECRET ?? "",
         grant_type: "refresh_token",
         refresh_token: token.refreshToken
-      })
+      }),
+      signal: AbortSignal.timeout(10000)
     });
 
     const refreshedTokens = (await response.json()) as {
