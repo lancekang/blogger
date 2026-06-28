@@ -27,7 +27,7 @@ description: Guides the agent on how to write SEO-optimized blog posts, perform 
 * **다운로드 링크 제공**: 공식 홈페이지 또는 애플 App Store 및 구글 Play Store의 검증된 스토어 다운로드 고유 ID(예: `id1262985592`) 링크를 버튼 형태로 제공하여 사용성을 극대화하십시오.
 
 ### C. 후보군 수동 검수 및 승인 워크플로우 (2-Step Generation)
-* **1단계 (후보군 추출)**: 선점한 요청에 `needReview: true` 및 `hasReviewed: false`가 설정된 경우, 에이전트는 본문을 즉시 작성하지 않고 1차 시장 조사만 수행합니다. 조사한 비교 대상 제품 3~4개의 정보를 아래 형식의 JSON 배열로 만들어 `PATCH /api/ai/request-post` (`action: "awaiting_review"`)에 전송한 뒤 작업을 일시 정지합니다:
+* **1단계 (후보군 추출)**: 선점한 요청에 `needReview: true` 및 `hasReviewed: false`가 설정된 경우, 에이전트는 본문을 즉시 작성하지 않고 1차 시장 조사만 수행합니다. 이때 수집할 후보군의 개수는 요청 JSON의 `compareCount` 값(정의되지 않았거나 비정상적일 경우 기본값 3)을 준수하여 정확히 그 개수만큼의 후보군 데이터를 아래 형식의 JSON 배열로 만들어 `PATCH /api/ai/request-post` (`action: "awaiting_review"`)에 전송한 뒤 작업을 일시 정지합니다:
   ```json
   [
     {
@@ -39,7 +39,7 @@ description: Guides the agent on how to write SEO-optimized blog posts, perform 
     }
   ]
   ```
-* **2단계 (승인 후 본문 작성)**: 요청에 `needReview: false`이거나 `hasReviewed: true`인 경우 최종 매거진 스타일의 원고 작성을 수행합니다. 특히 `hasReviewed: true`인 경우, `requested-keywords/${requestId}_candidates.json`에 저장된 사용자가 승인 및 편집한 후보군 정보를 **그대로 본문에 반영**해야 하며, 임의로 다른 상품을 지어내거나 누락해서는 안 됩니다.
+* **2단계 (승인 후 본문 작성)**: 요청에 `needReview: false`이거나 `hasReviewed: true`인 경우 최종 매거진 스타일의 원고 작성을 수행합니다. `needReview: false`인 경우에도 `compareCount` 값(기본값 3)을 준수하여 그 개수만큼의 제품을 직접 조사하여 비교하고 본문을 작성합니다. 특히 `hasReviewed: true`인 경우, `requested-keywords/${requestId}_candidates.json`에 저장된 사용자가 승인 및 편집한 후보군 정보를 **그대로 본문에 반영**해야 하며, 임의로 다른 상품을 지어내거나 누락해서는 안 됩니다.
 
 ---
 

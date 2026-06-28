@@ -21,6 +21,7 @@ export type PostRequest = {
   workerId?: string;
   needReview?: boolean;
   hasReviewed?: boolean;
+  compareCount?: number;
 };
 
 export class RequestQueueError extends Error {
@@ -75,6 +76,10 @@ function normalizeRequest(value: unknown): PostRequest {
 
   const needReview = source.needReview === true;
   const hasReviewed = source.hasReviewed === true;
+  const compareCount =
+    typeof source.compareCount === "number" && Number.isInteger(source.compareCount) && source.compareCount >= 1
+      ? source.compareCount
+      : 3;
 
   const optionalString = (key: string) =>
     typeof source[key] === "string" && source[key] ? (source[key] as string) : undefined;
@@ -91,7 +96,8 @@ function normalizeRequest(value: unknown): PostRequest {
     lastError: optionalString("lastError"),
     workerId: optionalString("workerId"),
     needReview,
-    hasReviewed
+    hasReviewed,
+    compareCount
   };
 }
 
@@ -172,7 +178,7 @@ export async function listPostRequests() {
   );
 }
 
-export async function createPostRequest(keyword: string, needReview = false) {
+export async function createPostRequest(keyword: string, needReview = false, compareCount = 3) {
   const normalizedKeyword = keyword.trim();
   if (!normalizedKeyword) throw new Error("요청할 키워드를 입력해 주세요.");
 
@@ -187,7 +193,8 @@ export async function createPostRequest(keyword: string, needReview = false) {
       requestedAt: new Date().toISOString(),
       status: "pending",
       attemptCount: 0,
-      needReview
+      needReview,
+      compareCount
     };
 
     try {

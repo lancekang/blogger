@@ -53,15 +53,16 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as { keyword?: unknown; needReview?: unknown };
+    const body = (await request.json()) as { keyword?: unknown; needReview?: unknown; compareCount?: unknown };
     const keyword = typeof body.keyword === "string" ? body.keyword.trim() : "";
     const needReview = body.needReview === true;
+    const compareCount = typeof body.compareCount === "number" ? body.compareCount : 3;
     
     if (!keyword) {
       return NextResponse.json({ error: "요청할 키워드를 입력해 주세요." }, { status: 400 });
     }
 
-    const created = await createPostRequest(keyword, needReview);
+    const created = await createPostRequest(keyword, needReview, compareCount);
     return NextResponse.json({ success: true, id: created.id, request: created }, { status: 201 });
   } catch (error) {
     return errorResponse(error, "에이전트에게 요청을 전달하지 못했습니다.");

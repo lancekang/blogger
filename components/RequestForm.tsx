@@ -7,6 +7,8 @@ type RequestFormProps = {
   handleRequestPost: () => void;
   needReview: boolean;
   setNeedReview: (val: boolean) => void;
+  compareCount: number;
+  setCompareCount: (val: number) => void;
 };
 
 export default function RequestForm({
@@ -15,7 +17,9 @@ export default function RequestForm({
   isRequesting,
   handleRequestPost,
   needReview,
-  setNeedReview
+  setNeedReview,
+  compareCount,
+  setCompareCount
 }: RequestFormProps) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -45,17 +49,37 @@ export default function RequestForm({
           </button>
         </div>
         
-        <div className="flex items-center gap-2 mt-1 px-1">
-          <input
-            id="need-review-checkbox"
-            type="checkbox"
-            checked={needReview}
-            onChange={(e) => setNeedReview(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-800 dark:bg-slate-950 cursor-pointer"
-          />
-          <label htmlFor="need-review-checkbox" className="text-xs font-medium text-slate-500 dark:text-slate-400 select-none cursor-pointer">
-            🔍 비교 후보군(스펙/가격)을 에이전트 생성 전에 먼저 직접 검수하고 편집하겠습니다.
-          </label>
+        <div className="flex flex-wrap items-center gap-4 mt-1 px-1">
+          <div className="flex items-center gap-2">
+            <input
+              id="need-review-checkbox"
+              type="checkbox"
+              checked={needReview}
+              onChange={(e) => setNeedReview(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-800 dark:bg-slate-950 cursor-pointer"
+            />
+            <label htmlFor="need-review-checkbox" className="text-xs font-medium text-slate-500 dark:text-slate-400 select-none cursor-pointer">
+              🔍 비교 후보군(스펙/가격)을 에이전트 생성 전에 먼저 직접 검수하고 편집하겠습니다.
+            </label>
+          </div>
+
+          <div className="flex items-center gap-2 border-l border-slate-200 pl-4 dark:border-slate-800">
+            <label htmlFor="compare-count-select" className="text-xs font-medium text-slate-500 dark:text-slate-400">
+              기본 비교 제품 수:
+            </label>
+            <select
+              id="compare-count-select"
+              value={compareCount}
+              onChange={(e) => setCompareCount(Number(e.target.value))}
+              className="h-7 rounded-lg border border-slate-200 bg-white px-2 text-xs font-bold text-slate-700 outline-none transition focus:border-indigo-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"
+            >
+              {[1, 2, 3, 4, 5].map((n) => (
+                <option key={n} value={n}>
+                  {n}개
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
     </section>

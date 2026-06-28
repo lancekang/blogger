@@ -40,8 +40,8 @@
 4. Codex App과 로컬 PC가 실행 중이어야 자동화가 동작한다는 점을 사용자에게 알린다.
 5. 현재 환경에서 자동화 생성 기능을 사용할 수 없으면 등록했다고 주장하지 말고, 지원되는 설정 절차를 사용자에게 안내한다.
 6. 자동화 등록 여부와 관계없이 `POST /api/ai/request-post/claim`으로 요청을 원자적으로 선점하고, 응답에 요청이 있을 때만 즉시 처리한다. `requestId`를 지정하지 않으면 가장 오래된 처리 가능 요청을 가져온다.
-7. 선점한 요청에 `needReview: true` 및 `hasReviewed: false`가 설정되어 있는 경우, 에이전트는 1차 조사(비교 대상 선정, 스펙/가격 수집)만 수행한다. 수집된 3~4개의 후보군 데이터를 `[ { "name": "...", "spec": "...", "price": "...", "pros": "...", "cons": "..." } ]` 형태의 JSON 배열로 구성하여 `PATCH http://localhost:3000/api/ai/request-post`에 `{ id: requestId, action: "awaiting_review", candidates }`로 요청하여 상태를 `awaiting_review`로 변경하고 작업을 종료한다.
-8. 요청에 `needReview: false`이거나 `hasReviewed: true`인 경우, 에이전트는 최종 포스팅 생성을 수행한다. `hasReviewed: true`인 경우에는 `requested-keywords/${requestId}_candidates.json` 파일에 저장된 검증 및 승인된 후보군 데이터를 **그대로 사용하여** 원고를 작성해야 하며, 임의로 다른 대상을 추가하거나 변경하지 않는다.
+7. 선점한 요청에 `needReview: true` 및 `hasReviewed: false`가 설정되어 있는 경우, 에이전트는 1차 조사(비교 대상 선정, 스펙/가격 수집)만 수행한다. 이때 수집할 후보군의 개수는 요청 JSON의 `compareCount` 값(정의되지 않았거나 비정상적일 경우 기본값 3)을 준수하여 정확히 그 개수만큼의 후보군 데이터를 `[ { "name": "...", "spec": "...", "price": "...", "pros": "...", "cons": "..." } ]` 형태의 JSON 배열로 구성하여 `PATCH http://localhost:3000/api/ai/request-post`에 `{ id: requestId, action: "awaiting_review", candidates }`로 요청하여 상태를 `awaiting_review`로 변경하고 작업을 종료한다.
+8. 요청에 `needReview: false`이거나 `hasReviewed: true`인 경우, 에이전트는 최종 포스팅 생성을 수행한다. `needReview: false`인 경우에도 `compareCount` 값(기본값 3)을 준수하여 그 개수만큼의 제품을 직접 조사하여 비교하고 본문을 작성한다. `hasReviewed: true`인 경우에는 `requested-keywords/${requestId}_candidates.json` 파일에 저장된 검증 및 승인된 후보군 데이터를 **그대로 사용하여** 원고를 작성해야 하며, 임의로 다른 대상을 추가하거나 변경하지 않는다.
 
 자동화 프롬프트에는 다음 의도를 포함한다: `$blogger-helper를 사용해 현재 로컬 프로젝트의 대기 큐를 확인하고 pending/approved 요청이 있으면 사실 검증 후 포스트를 생성하거나 후보군을 추출하여 저장한다. 대기 요청이 없으면 파일을 변경하지 않는다.`
 

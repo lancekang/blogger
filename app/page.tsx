@@ -72,6 +72,7 @@ export default function Home() {
   
   // 후보군 검수 및 승인 상태
   const [needReview, setNeedReview] = useState(false);
+  const [compareCount, setCompareCount] = useState(3);
   const [reviewingRequestId, setReviewingRequestId] = useState<string | null>(null);
   
   // 최신 트렌드 키워드 추천 상태
@@ -343,7 +344,7 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ keyword: trimmed, needReview })
+        body: JSON.stringify({ keyword: trimmed, needReview, compareCount })
       });
 
       const data = (await response.json()) as { success?: boolean; error?: string };
@@ -581,6 +582,8 @@ export default function Home() {
               handleRequestPost={handleRequestPost}
               needReview={needReview}
               setNeedReview={setNeedReview}
+              compareCount={compareCount}
+              setCompareCount={setCompareCount}
             />
 
             <RequestQueue
