@@ -1,0 +1,13 @@
+node_modules
+.next
+out
+dist
+.env
+.env*.local
+*.tsbuildinfo
+dev-server*.log
+vercel
+.vercel
+blogger.zip
+requested-keywords/
+pending-posts/

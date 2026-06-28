@@ -1,0 +1,60 @@
+<!--
+Blogger Magazine Post Template
+Required: replace every {{PLACEHOLDER}} and repeat PRODUCT_CARD as needed.
+Keep all styles inline. Use 3-5 labels outside this HTML in the pending-post JSON.
+-->
+<div style="font-family:'Noto Sans KR',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.8;color:#333333;max-width:800px;margin:0 auto;padding:24px;background-color:#ffffff;">
+  <header style="text-align:center;padding:42px 0 32px;border-bottom:2px solid #111111;margin-bottom:38px;">
+    <p style="font-size:13px;letter-spacing:2px;color:#888888;text-transform:uppercase;margin:0 0 12px;font-weight:700;">{{KICKER}}</p>
+    <h1 style="font-size:32px;font-weight:800;color:#111111;line-height:1.4;margin:0 0 18px;letter-spacing:-1.4px;word-break:keep-all;">{{TITLE_BEFORE}}<br><span style="color:{{PRIMARY_COLOR}};background:linear-gradient(to right,{{PRIMARY_COLOR}},{{PRIMARY_DARK}});-webkit-background-clip:text;-webkit-text-fill-color:transparent;">{{TITLE_HIGHLIGHT}}</span> {{TITLE_AFTER}}</h1>
+    <p style="font-size:16px;color:#666666;margin:0 auto;max-width:640px;word-break:keep-all;">{{DECK}}</p>
+  </header>
+
+  <!-- Use one representative visual. Prefer {{IMAGE_0}} when an image asset exists; otherwise build a restrained editorial visual block. -->
+  <section style="margin:0 0 42px;border-radius:18px;overflow:hidden;background:linear-gradient(135deg,#08111f 0%,#102a43 55%,{{PRIMARY_DARK}} 100%);color:#ffffff;box-shadow:0 10px 30px rgba(13,71,161,.18);">
+    {{HERO_VISUAL}}
+  </section>
+
+  <section style="background-color:#f8f9fa;border-radius:16px;padding:28px;margin-bottom:44px;border:1px solid #e9ecef;">
+    <h2 style="font-size:20px;color:#212529;margin:0 0 16px;display:flex;align-items:center;"><span style="background-color:{{PRIMARY_COLOR}};width:6px;height:20px;display:inline-block;margin-right:10px;border-radius:2px;"></span>{{INTRO_HEADING}}</h2>
+    {{INTRO_PARAGRAPHS}}
+  </section>
+
+  <!-- PRODUCT_CARD: repeat for every compared product. Give each card one restrained accent color. -->
+  <section style="margin-bottom:34px;">
+    <div style="border:1px solid {{CARD_BORDER}};border-radius:16px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,.05);">
+      <div style="padding:24px 26px 18px;background:linear-gradient(135deg,{{CARD_BG_START}},{{CARD_BG_END}});border-bottom:1px solid {{CARD_BORDER}};">
+        <span style="background-color:{{CARD_ACCENT}};color:#ffffff;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.5px;">{{PRODUCT_BADGE}}</span>
+        <h2 style="font-size:24px;font-weight:800;color:{{CARD_DARK}};margin:10px 0 4px;">{{PRODUCT_NAME}}</h2>
+        <p style="margin:0;color:#52606d;font-size:14px;">{{PRODUCT_ONE_LINE}}</p>
+      </div>
+      <div style="padding:24px 26px;">
+        {{PRODUCT_EDITORIAL_BODY}}
+        <table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;"><tbody>{{SPEC_ROWS}}</tbody></table>
+        <div style="background:#fff8e1;border-left:4px solid #f9a825;padding:14px 16px;margin:18px 0;font-size:14px;"><strong>구매 전 확인:</strong> {{BUYING_CAUTION}}</div>
+        <p style="font-size:12px;color:#6b7280;">공식 자료: <a href="{{OFFICIAL_URL}}" target="_blank" rel="noopener noreferrer" style="color:{{CARD_DARK}};">{{OFFICIAL_LINK_LABEL}}</a></p>
+        <div style="text-align:center;margin-top:22px;">
+          <a href="{{SHOPPING_URL}}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background-color:{{CARD_ACCENT}};color:#ffffff;padding:12px 28px;border-radius:30px;font-weight:700;font-size:15px;text-decoration:none;box-shadow:0 4px 10px {{BUTTON_SHADOW}};">{{PRICE_BUTTON_LABEL}}</a>
+          <p style="font-size:11px;color:#888888;font-style:italic;margin:8px 0 0;">※ 실시간 가격 비교 링크는 시장 상황 및 조회 시점에 따라 실제 판매 가격과 재고가 상이할 수 있습니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- /PRODUCT_CARD -->
+
+  <section style="background-color:#f8f9fa;border-radius:16px;padding:28px;margin-bottom:40px;border:1px solid #e9ecef;">
+    <h2 style="font-size:21px;color:#212529;margin:0 0 18px;text-align:center;">{{DECISION_HEADING}}</h2>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">{{DECISION_CARDS}}</div>
+    <p style="margin:22px 0 0;font-size:14px;color:#555555;">{{DECISION_NOTE}}</p>
+  </section>
+
+  <section style="margin-bottom:34px;">
+    <h2 style="font-size:22px;color:#111111;border-bottom:2px solid #111111;padding-bottom:10px;">{{CHECKLIST_HEADING}}</h2>
+    <ol style="padding-left:22px;margin-bottom:0;">{{CHECKLIST_ITEMS}}</ol>
+  </section>
+
+  <footer style="margin-top:50px;border-top:1px solid #111111;padding-top:20px;text-align:center;color:#888888;font-size:12px;">
+    <p style="margin:0 0 6px;">자료 확인일: {{VERIFIED_DATE}} · {{SOURCE_NOTE}}</p>
+    <p style="margin:0;">{{CHANGE_NOTICE}}</p>
+  </footer>
+</div>
