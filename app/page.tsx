@@ -299,6 +299,9 @@ export default function Home() {
           kind: "success",
           text: `[자동 처리 완료] ${isDraft ? "초안 저장" : "즉시 발행"}: ${data.post?.title ?? targetPost.title}`
         });
+
+        // 429 Rate Limit (Too Many Requests) 방지를 위해 4초 대기 (쿨다운)
+        await new Promise((resolve) => setTimeout(resolve, 4000));
       } catch (error) {
         console.error("Auto-publish error:", error);
         setMessage({
