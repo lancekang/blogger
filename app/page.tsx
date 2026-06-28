@@ -70,7 +70,7 @@ export default function Home() {
   const loadTrends = useCallback(async () => {
     setIsRefreshingTrends(true);
     try {
-      const response = await fetch("/api/ai/trend-keywords");
+      const response = await fetch(`/api/ai/trend-keywords?t=${Date.now()}`);
       if (response.ok) {
         const data = (await response.json()) as TrendsResponse;
         setTrends(data);

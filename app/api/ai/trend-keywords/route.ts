@@ -15,8 +15,45 @@ function shuffleArray<T>(array: T[]): T[] {
   return arr;
 }
 
+async function fetchRssKeywords(searchQuery: string, fallbackPool: string[]): Promise<string[]> {
+  try {
+    const url = `https://news.google.com/rss/search?q=${encodeURIComponent(searchQuery)}&hl=ko&gl=KR&ceid=KR:ko`;
+    const response = await fetch(url, { cache: "no-store" });
+    if (!response.ok) throw new Error("Failed to fetch RSS");
+    const xml = await response.text();
+    
+    const matches = xml.matchAll(/<item>[\s\S]*?<\/item>/g);
+    const titles: string[] = [];
+    for (const match of matches) {
+      const itemContent = match[0];
+      const titleMatch = /<title>(.*?)<\/title>/.exec(itemContent);
+      if (titleMatch && titleMatch[1]) {
+        let title = titleMatch[1];
+        // HTML 엔티티 디코딩
+        title = title
+          .replace(/&amp;/g, "&")
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'");
+        // 매체명 접미사 제거 (예: " - 전자신문" 또는 " - IT조선")
+        title = title.replace(/\s+-\s+[^-]+$/, "").trim();
+        if (title && !titles.includes(title)) {
+          titles.push(title);
+        }
+      }
+    }
+    
+    if (titles.length >= 5) {
+      return shuffleArray(titles).slice(0, 5);
+    }
+  } catch (error) {
+    console.error(`Error fetching RSS for "${searchQuery}":`, error);
+  }
+  return shuffleArray(fallbackPool).slice(0, 5);
+}
+
 export async function GET() {
-  // 현재 연도 기반 풍부한 키워드 풀 (카테고리별 10개)
   const tabletMobilePool = [
     `${currentYear}년 가성비 8인치 안드로이드 태블릿 비교 추천`,
     "아이패드 에어 8세대 M4 탑재 모델 성능 분석",
@@ -69,22 +106,30 @@ export async function GET() {
     "갤럭시 링 2세대 배터리 수명 및 수면 분석 성능"
   ];
 
+  // 각 카테고리별로 관련성 높은 검색 쿼리로 Google News 실시간 정보 조회
+  const [tabletMobile, laptopPc, gamingUmpc, wearableTech] = await Promise.all([
+    fetchRssKeywords("스마트폰 OR 태블릿 OR 아이패드 OR 갤럭시탭", tabletMobilePool),
+    fetchRssKeywords("노트북 OR 맥북 OR 그램 OR 갤럭시북", laptopPcPool),
+    fetchRssKeywords("게임기 OR UMPC OR 스팀덱 OR 닌텐도", gamingUmpcPool),
+    fetchRssKeywords("스마트워치 OR 애플워치 OR 갤럭시워치 OR 스마트링", wearableTechPool)
+  ]);
+
   const trends = {
     tabletMobile: {
       category: "📱 태블릿 & 모바일",
-      keywords: shuffleArray(tabletMobilePool).slice(0, 5)
+      keywords: tabletMobile
     },
     laptopPc: {
       category: "💻 노트북 & PC",
-      keywords: shuffleArray(laptopPcPool).slice(0, 5)
+      keywords: laptopPc
     },
     gamingUmpc: {
       category: "🎮 게이밍 & UMPC",
-      keywords: shuffleArray(gamingUmpcPool).slice(0, 5)
+      keywords: gamingUmpc
     },
     wearableTech: {
       category: "⌚ 웨어러블 & 스마트헬스",
-      keywords: shuffleArray(wearableTechPool).slice(0, 5)
+      keywords: wearableTech
     }
   };
 
