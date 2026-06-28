@@ -90,6 +90,19 @@ export default function Home() {
   const [isLoadingBlogs, setIsLoadingBlogs] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // 에이전트 발행 모드 설정 ("manual" | "draft" | "publish")
+  const [publishMode, setPublishMode] = useState<"manual" | "draft" | "publish">(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("blogger_publish_mode");
+      return (saved as "manual" | "draft" | "publish") || "manual";
+    }
+    return "manual";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("blogger_publish_mode", publishMode);
+  }, [publishMode]);
+
   const selectedBlog = useMemo(() => blogs.find((blog) => blog.id === selectedBlogId), [blogs, selectedBlogId]);
 
   // 블로그 목록 조회
@@ -242,6 +255,64 @@ export default function Home() {
 
     return () => clearInterval(interval);
   }, [status, refreshAllData]);
+
+  // 자동 발행 처리 감지 및 수행
+  useEffect(() => {
+    if (status !== "authenticated" || publishMode === "manual" || pendingPosts.length === 0 || !selectedBlogId || isSubmitting) {
+      return;
+    }
+
+    const targetPost = pendingPosts[0];
+    const isDraft = publishMode === "draft";
+
+    setIsSubmitting(true);
+    
+    void (async () => {
+      try {
+        const response = await fetch("/api/blogger/posts", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            blogId: selectedBlogId,
+            title: targetPost.title,
+            content: targetPost.content,
+            labels: targetPost.labels,
+            isDraft
+          })
+        });
+
+        const data = (await response.json()) as {
+          post?: { title?: string | null };
+          error?: string;
+        };
+
+        if (!response.ok) {
+          throw new Error(data.error ?? "Blogger 등록 실패");
+        }
+
+        // 성공 시 pending-posts에서 삭제
+        await fetch(`/api/ai/pending-posts?id=${targetPost.id}`, { method: "DELETE" });
+        
+        setMessage({
+          kind: "success",
+          text: `[자동 처리 완료] ${isDraft ? "초안 저장" : "즉시 발행"}: ${data.post?.title ?? targetPost.title}`
+        });
+      } catch (error) {
+        console.error("Auto-publish error:", error);
+        setMessage({
+          kind: "error",
+          text: `[자동 발행 실패] ${targetPost.title.substring(0, 15)}... - ${error instanceof Error ? error.message : "알 수 없는 오류"}`
+        });
+        // 에러 방지를 위해 수동 모드로 강제 복귀
+        setPublishMode("manual");
+      } finally {
+        setIsSubmitting(false);
+        refreshAllData();
+      }
+    })();
+  }, [pendingPosts, publishMode, selectedBlogId, isSubmitting, status, refreshAllData]);
 
   // 에이전트에게 포스팅 생성 요청
   async function handleRequestPost() {
@@ -535,6 +606,50 @@ export default function Home() {
                 <div className="rounded-xl bg-slate-50 p-3.5 text-xs font-medium text-slate-500 border border-slate-100">
                   {isLoadingBlogs ? "블로그 정보를 불러오는 중..." : selectedBlog?.url ?? "선택된 블로그 주소가 여기에 표시됩니다."}
                 </div>
+              </div>
+
+              <div className="mt-5 pt-5 border-t border-slate-100">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">⚡ 에이전트 발행 모드 설정</span>
+                <div className="mt-2.5 flex flex-wrap gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setPublishMode("manual")}
+                    className={`flex-1 min-w-[140px] rounded-xl border py-2.5 px-4 text-xs font-bold transition-all ${
+                      publishMode === "manual"
+                        ? "bg-slate-950 text-white border-slate-950 shadow-sm"
+                        : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                    }`}
+                  >
+                    🔍 수동 검수 후 발행
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPublishMode("draft")}
+                    className={`flex-1 min-w-[140px] rounded-xl border py-2.5 px-4 text-xs font-bold transition-all ${
+                      publishMode === "draft"
+                        ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                        : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                    }`}
+                  >
+                    📂 Blogger 초안으로 자동 저장
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPublishMode("publish")}
+                    className={`flex-1 min-w-[140px] rounded-xl border py-2.5 px-4 text-xs font-bold transition-all ${
+                      publishMode === "publish"
+                        ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                        : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                    }`}
+                  >
+                    🚀 Blogger에 즉시 자동 발행
+                  </button>
+                </div>
+                <p className="mt-2.5 text-[11px] font-medium leading-relaxed text-slate-400">
+                  {publishMode === "manual" && "※ 에이전트가 글을 완료하면 대기 목록에 남고, 사용자가 직접 디자인을 확인하고 발행을 결정합니다."}
+                  {publishMode === "draft" && "※ 에이전트가 글 생성을 완료하는 즉시, 사용자 개입 없이 Blogger에 '임시저장 초안'으로 자동 업로드됩니다."}
+                  {publishMode === "publish" && "※ 에이전트가 글 생성을 완료하는 즉시, 사용자 개입 없이 Blogger에 '공개 포스트'로 자동 발행됩니다."}
+                </p>
               </div>
             </section>
 
