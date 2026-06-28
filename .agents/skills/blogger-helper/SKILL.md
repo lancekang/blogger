@@ -26,6 +26,21 @@ description: Guides the agent on how to write SEO-optimized blog posts, perform 
   > *※ 실시간 가격 비교 링크는 시장 상황 및 조회 시점에 따라 실제 판매 가격과 재고가 상이할 수 있습니다.*
 * **다운로드 링크 제공**: 공식 홈페이지 또는 애플 App Store 및 구글 Play Store의 검증된 스토어 다운로드 고유 ID(예: `id1262985592`) 링크를 버튼 형태로 제공하여 사용성을 극대화하십시오.
 
+### C. 후보군 수동 검수 및 승인 워크플로우 (2-Step Generation)
+* **1단계 (후보군 추출)**: 선점한 요청에 `needReview: true` 및 `hasReviewed: false`가 설정된 경우, 에이전트는 본문을 즉시 작성하지 않고 1차 시장 조사만 수행합니다. 조사한 비교 대상 제품 3~4개의 정보를 아래 형식의 JSON 배열로 만들어 `PATCH /api/ai/request-post` (`action: "awaiting_review"`)에 전송한 뒤 작업을 일시 정지합니다:
+  ```json
+  [
+    {
+      "name": "제품명 또는 모델명",
+      "spec": "주요 사양 및 스펙 요약",
+      "price": "실구매가 또는 다나와 가격",
+      "pros": "핵심 장점",
+      "cons": "핵심 단점"
+    }
+  ]
+  ```
+* **2단계 (승인 후 본문 작성)**: 요청에 `needReview: false`이거나 `hasReviewed: true`인 경우 최종 매거진 스타일의 원고 작성을 수행합니다. 특히 `hasReviewed: true`인 경우, `requested-keywords/${requestId}_candidates.json`에 저장된 사용자가 승인 및 편집한 후보군 정보를 **그대로 본문에 반영**해야 하며, 임의로 다른 상품을 지어내거나 누락해서는 안 됩니다.
+
 ---
 
 ## 2. 개발 시 기술적 수칙

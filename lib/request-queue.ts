@@ -6,7 +6,7 @@ export const PROCESSING_TIMEOUT_MS = 30 * 60 * 1000;
 export const MAX_ATTEMPTS = 3;
 const LOCK_STALE_MS = 60 * 1000;
 
-export type RequestStatus = "pending" | "processing" | "completed" | "failed";
+export type RequestStatus = "pending" | "processing" | "completed" | "failed" | "awaiting_review" | "approved";
 
 export type PostRequest = {
   id: string;
@@ -19,6 +19,8 @@ export type PostRequest = {
   failedAt?: string;
   lastError?: string;
   workerId?: string;
+  needReview?: boolean;
+  hasReviewed?: boolean;
 };
 
 export class RequestQueueError extends Error {
@@ -62,7 +64,7 @@ function normalizeRequest(value: unknown): PostRequest {
     throw new Error("Request timestamp is invalid.");
   }
 
-  const allowedStatuses: RequestStatus[] = ["pending", "processing", "completed", "failed"];
+  const allowedStatuses: RequestStatus[] = ["pending", "processing", "completed", "failed", "awaiting_review", "approved"];
   const status = allowedStatuses.includes(source.status as RequestStatus)
     ? (source.status as RequestStatus)
     : "pending";
@@ -70,6 +72,9 @@ function normalizeRequest(value: unknown): PostRequest {
     typeof source.attemptCount === "number" && Number.isInteger(source.attemptCount) && source.attemptCount >= 0
       ? source.attemptCount
       : 0;
+
+  const needReview = source.needReview === true;
+  const hasReviewed = source.hasReviewed === true;
 
   const optionalString = (key: string) =>
     typeof source[key] === "string" && source[key] ? (source[key] as string) : undefined;
@@ -84,7 +89,9 @@ function normalizeRequest(value: unknown): PostRequest {
     completedAt: optionalString("completedAt"),
     failedAt: optionalString("failedAt"),
     lastError: optionalString("lastError"),
-    workerId: optionalString("workerId")
+    workerId: optionalString("workerId"),
+    needReview,
+    hasReviewed
   };
 }
 
@@ -165,7 +172,7 @@ export async function listPostRequests() {
   );
 }
 
-export async function createPostRequest(keyword: string) {
+export async function createPostRequest(keyword: string, needReview = false) {
   const normalizedKeyword = keyword.trim();
   if (!normalizedKeyword) throw new Error("요청할 키워드를 입력해 주세요.");
 
@@ -179,7 +186,8 @@ export async function createPostRequest(keyword: string) {
       keyword: normalizedKeyword,
       requestedAt: new Date().toISOString(),
       status: "pending",
-      attemptCount: 0
+      attemptCount: 0,
+      needReview
     };
 
     try {
@@ -205,7 +213,7 @@ export async function claimPostRequest(id: string, workerId = "agent") {
     const current = await readRequestFile(id);
     const now = Date.now();
 
-    if (current.status === "completed" || current.status === "failed") return null;
+    if (current.status === "completed" || current.status === "failed" || current.status === "awaiting_review") return null;
     if (current.status === "processing") {
       const startedAt = current.processingStartedAt
         ? Date.parse(current.processingStartedAt)
@@ -326,5 +334,47 @@ export async function deletePostRequest(id: string) {
   return withRequestLock(id, async () => {
     await readRequestFile(id);
     await fs.unlink(requestPath(id));
+    // 후보군 파일도 함께 삭제
+    const candidatesPath = path.join(REQUEST_DIR, `${id}_candidates.json`);
+    await fs.unlink(candidatesPath).catch(() => undefined);
   });
 }
+
+export async function markRequestAwaitingReview(id: string) {
+  return withRequestLock(id, async () => {
+    const current = await readRequestFile(id);
+    if (current.status === "completed") {
+      throw new RequestQueueError("완료된 요청은 검수 대기 상태로 변경할 수 없습니다.", "INVALID_STATE");
+    }
+
+    const awaiting: PostRequest = {
+      ...current,
+      status: "awaiting_review",
+      processingStartedAt: undefined,
+      workerId: undefined
+    };
+    await writeJsonAtomically(requestPath(id), awaiting);
+    return awaiting;
+  });
+}
+
+export async function approvePostRequest(id: string) {
+  return withRequestLock(id, async () => {
+    const current = await readRequestFile(id);
+    if (current.status !== "awaiting_review") {
+      throw new RequestQueueError("검수 대기 중인 요청만 승인할 수 있습니다.", "INVALID_STATE");
+    }
+
+    const approved: PostRequest = {
+      ...current,
+      status: "approved",
+      hasReviewed: true,
+      attemptCount: 0,
+      processingStartedAt: undefined,
+      workerId: undefined
+    };
+    await writeJsonAtomically(requestPath(id), approved);
+    return approved;
+  });
+}
+

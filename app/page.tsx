@@ -10,6 +10,7 @@ import RequestForm from "@/components/RequestForm";
 import RequestQueue from "@/components/RequestQueue";
 import PendingPostsList from "@/components/PendingPostsList";
 import PreviewViewer from "@/components/PreviewViewer";
+import CandidateEditor from "@/components/CandidateEditor";
 
 type Blog = {
   id: string;
@@ -68,6 +69,10 @@ export default function Home() {
   const [requestKeyword, setRequestKeyword] = useState("");
   const [isRequesting, setIsRequesting] = useState(false);
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
+  
+  // 후보군 검수 및 승인 상태
+  const [needReview, setNeedReview] = useState(false);
+  const [reviewingRequestId, setReviewingRequestId] = useState<string | null>(null);
   
   // 최신 트렌드 키워드 추천 상태
   const [trends, setTrends] = useState<TrendsResponse | null>(null);
@@ -338,7 +343,7 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ keyword: trimmed })
+        body: JSON.stringify({ keyword: trimmed, needReview })
       });
 
       const data = (await response.json()) as { success?: boolean; error?: string };
@@ -519,7 +524,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f8fafc] px-4 py-8 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#f8fafc] px-4 py-8 sm:px-6 lg:px-8 transition-colors duration-200 dark:bg-slate-950">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
         
         <Header session={session} status={status} signOut={signOut} />
@@ -527,16 +532,16 @@ export default function Home() {
         <QuotaBanner quotaResetTime={quotaResetTime} timeLeftText={timeLeftText} />
 
         {status === "loading" ? (
-          <section className="rounded-2xl border border-slate-100 bg-white p-8 text-center shadow-sm">
-            <p className="text-sm text-slate-500 animate-pulse">로그인 상태를 확인하는 중입니다...</p>
+          <section className="rounded-2xl border border-slate-100 bg-white p-8 text-center shadow-sm dark:border-slate-850 dark:bg-slate-900">
+            <p className="text-sm text-slate-500 animate-pulse dark:text-slate-400">로그인 상태를 확인하는 중입니다...</p>
           </section>
         ) : null}
 
         {status === "unauthenticated" ? (
-          <section className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <section className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="max-w-sm">
-              <h2 className="text-lg font-bold text-slate-900">Google 계정 연동 필요</h2>
-              <p className="mt-2 text-sm text-slate-500">Blogger에 글을 발행하기 위해 Google 계정으로 로그인해 주세요.</p>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Google 계정 연동 필요</h2>
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Blogger에 글을 발행하기 위해 Google 계정으로 로그인해 주세요.</p>
               <button
                 type="button"
                 onClick={() => signIn("google")}
@@ -574,12 +579,15 @@ export default function Home() {
               setRequestKeyword={setRequestKeyword}
               isRequesting={isRequesting}
               handleRequestPost={handleRequestPost}
+              needReview={needReview}
+              setNeedReview={setNeedReview}
             />
 
             <RequestQueue
               pendingRequests={pendingRequests}
               retryPendingRequest={retryPendingRequest}
               deletePendingRequest={deletePendingRequest}
+              onReviewRequest={(id) => setReviewingRequestId(id)}
             />
 
             <PendingPostsList
@@ -600,6 +608,20 @@ export default function Home() {
           </div>
         ) : null}
       </div>
+
+      {reviewingRequestId && (
+        <CandidateEditor
+          requestId={reviewingRequestId}
+          onClose={() => setReviewingRequestId(null)}
+          onApproved={() => {
+            setMessage({
+              kind: "success",
+              text: "후보군이 승인되었습니다! 최종 포스트 생성이 시작됩니다."
+            });
+            refreshAllData();
+          }}
+        />
+      )}
     </main>
   );
 }
